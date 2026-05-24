@@ -1,346 +1,823 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Art Gallery</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Georgia', serif;
-      background: #0f0f0f;
-      color: #e8e8e8;
-      min-height: 100vh;
+    :root {
+      --bg: #0f0f0f; --surface: #161616; --surface2: #1e1e1e;
+      --border: #272727; --gold: #c8a96e; --text: #e8e8e8; --muted: #777;
     }
+    body { font-family: 'Georgia', serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .hidden { display: none !important; }
 
-    header {
-      text-align: center;
-      padding: 3rem 1rem 2rem;
-      border-bottom: 1px solid #2a2a2a;
+    /* inputs / buttons */
+    input, textarea {
+      width: 100%; padding: .65rem .9rem; border: 1px solid var(--border);
+      background: #111; color: var(--text); font-family: inherit; font-size: .93rem;
+      border-radius: 4px; outline: none; transition: border-color .2s;
     }
-
-    header h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 400;
-      letter-spacing: 0.1em;
-      color: #fff;
-    }
-
-    header p {
-      margin-top: 0.5rem;
-      font-size: 1rem;
-      color: #888;
-      font-style: italic;
-    }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      padding: 1.5rem 1rem;
-      flex-wrap: wrap;
-    }
+    input:focus, textarea:focus { border-color: var(--gold); }
+    textarea { resize: vertical; min-height: 80px; }
+    .field { margin-bottom: 1.1rem; }
+    .field label { display: block; font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .35rem; }
+    .field-error { font-size: .75rem; color: #e05; margin-top: .3rem; display: none; }
 
     .btn {
-      padding: 0.6rem 1.4rem;
-      border: 1px solid #555;
-      background: transparent;
-      color: #e8e8e8;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-      font-family: inherit;
+      padding: .6rem 1.4rem; border: 1px solid #555; background: transparent;
+      color: var(--text); font-size: .84rem; letter-spacing: .07em; cursor: pointer;
+      font-family: inherit; border-radius: 4px; transition: background .18s, color .18s, border-color .18s;
     }
+    .btn:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-gold { border-color: var(--gold); color: var(--gold); }
+    .btn-gold:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+    .btn-sm { padding: .38rem .95rem; font-size: .78rem; }
+    .btn-full { width: 100%; }
 
-    .btn:hover {
-      background: #e8e8e8;
-      color: #0f0f0f;
-      border-color: #e8e8e8;
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(15,15,15,.96); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
     }
+    .header-inner {
+      max-width: 1400px; margin: 0 auto; padding: .9rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .site-brand { font-size: 1.25rem; letter-spacing: .12em; color: #fff; font-weight: 400; }
+    .site-brand span { color: var(--gold); }
 
-    .btn-primary {
-      border-color: #c8a96e;
-      color: #c8a96e;
-    }
-
-    .btn-primary:hover {
-      background: #c8a96e;
-      color: #0f0f0f;
-    }
+    .nav-guest { display: flex; gap: .6rem; }
+    .nav-user  { display: flex; align-items: center; gap: .8rem; }
 
     #file-input { display: none; }
+    .user-chip {
+      display: flex; align-items: center; gap: .55rem; cursor: pointer;
+      padding: .35rem .75rem; border: 1px solid var(--border); border-radius: 20px;
+      transition: border-color .2s; position: relative;
+    }
+    .user-chip:hover { border-color: var(--gold); }
+    .chip-avatar {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--surface2);
+      border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; color: var(--gold); letter-spacing: .03em; flex-shrink: 0;
+    }
+    .chip-name { font-size: .82rem; color: var(--text); }
+    .user-menu {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      min-width: 150px; overflow: hidden; z-index: 300;
+    }
+    .user-menu.open { display: block; }
+    .user-menu button {
+      display: block; width: 100%; padding: .7rem 1rem; background: none; border: none;
+      color: var(--text); font-family: inherit; font-size: .83rem; text-align: left; cursor: pointer;
+    }
+    .user-menu button:hover { background: var(--surface2); }
 
-    .empty-state {
-      text-align: center;
-      padding: 5rem 1rem;
-      color: #444;
+    /* ── HERO ── */
+    #hero {
+      text-align: center; padding: 5rem 1rem 4rem;
+      background: radial-gradient(ellipse at 50% 0%, #1c1810 0%, var(--bg) 70%);
+      border-bottom: 1px solid var(--border);
+    }
+    #hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 400; letter-spacing: .08em; color: #fff; }
+    #hero p  { margin-top: .7rem; color: var(--muted); font-style: italic; font-size: 1rem; }
+    #hero .hero-btns { margin-top: 2rem; display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── PROFILE BANNER (logged in) ── */
+    #profile-banner {
+      max-width: 1400px; margin: 0 auto; padding: 2rem 2rem 1.2rem;
+      display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap;
+    }
+    .banner-avatar {
+      width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--gold);
+      background: var(--surface2); display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; color: var(--gold); flex-shrink: 0;
+    }
+    .banner-info h2 { font-size: 1.5rem; font-weight: 400; color: #fff; letter-spacing: .04em; }
+    .banner-info .b-style { color: var(--gold); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin: .25rem 0; }
+    .banner-info .b-about { color: var(--muted); font-size: .88rem; line-height: 1.55; margin-top: .3rem; }
+
+    /* ── CONTROLS ── */
+    .controls {
+      max-width: 1400px; margin: 0 auto; padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .6rem;
+    }
+    .img-count { color: var(--muted); font-size: .8rem; font-style: italic; }
+    .gallery-heading { font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .filter-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    .filter-tab {
+      padding: .35rem .9rem; font-size: .78rem; letter-spacing: .07em; cursor: pointer;
+      background: none; border: none; color: var(--muted); font-family: inherit; transition: background .15s, color .15s;
+    }
+    .filter-tab:not(:last-child) { border-right: 1px solid var(--border); }
+    .filter-tab.active { background: var(--surface2); color: var(--text); }
+
+    /* ── SEARCH & TAGS ── */
+    .search-bar {
+      max-width: 1400px; margin: 0 auto; padding: .4rem 2rem .8rem;
+      display: flex; gap: .6rem; align-items: center; flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative; flex: 1; min-width: 180px; max-width: 340px;
+    }
+    .search-wrap input {
+      padding-left: 2rem; font-size: .85rem; background: var(--surface);
+    }
+    .search-icon {
+      position: absolute; left: .65rem; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: .85rem; pointer-events: none;
+    }
+    .tag-chips { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+    .tag-chip {
+      padding: .25rem .75rem; border-radius: 20px; font-size: .74rem;
+      border: 1px solid var(--border); background: none; color: var(--muted);
+      cursor: pointer; font-family: inherit; transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .tag-chip:hover  { border-color: #555; color: var(--text); }
+    .tag-chip.active { background: var(--gold); border-color: var(--gold); color: #000; }
+    .clear-search { font-size: .75rem; color: var(--muted); cursor: pointer; background: none; border: none; font-family: inherit; padding: .2rem .4rem; }
+    .clear-search:hover { color: var(--text); }
+    .g-tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+    .g-tag {
+      font-size: .65rem; padding: .15rem .55rem; border-radius: 12px;
+      background: rgba(200,169,110,.18); color: var(--gold); border: 1px solid rgba(200,169,110,.3);
+      cursor: pointer;
     }
 
-    .empty-state svg {
-      width: 64px;
-      height: 64px;
-      stroke: #333;
-      margin-bottom: 1rem;
-    }
-
-    .empty-state p {
-      font-size: 1.1rem;
-    }
-
-    /* Masonry grid */
-    .gallery {
-      columns: 3 280px;
-      column-gap: 12px;
-      padding: 1rem 2rem 3rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
+    /* ── GALLERY ── */
+    .gallery { columns: 3 260px; column-gap: 12px; padding: 0 2rem 4rem; max-width: 1400px; margin: 0 auto; }
     .gallery-item {
-      break-inside: avoid;
-      margin-bottom: 12px;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-      background: #1a1a1a;
+      break-inside: avoid; margin-bottom: 12px; position: relative; overflow: hidden;
+      cursor: pointer; background: #1a1a1a; border-radius: 4px;
     }
-
-    .gallery-item img {
-      width: 100%;
-      display: block;
-      transition: transform 0.4s ease, opacity 0.4s ease;
+    .gallery-item img { width: 100%; display: block; transition: transform .4s, opacity .4s; }
+    .gallery-item:hover img { transform: scale(1.03); opacity: .72; }
+    .g-overlay {
+      position: absolute; inset: 0; display: flex; align-items: flex-end; padding: .9rem;
+      background: linear-gradient(transparent 40%, rgba(0,0,0,.82)); opacity: 0; transition: opacity .28s;
     }
-
-    .gallery-item:hover img {
-      transform: scale(1.03);
-      opacity: 0.75;
+    .gallery-item:hover .g-overlay { opacity: 1; }
+    .g-overlay-text { flex: 1; min-width: 0; }
+    .g-desc { font-size: .8rem; color: #ddd; line-height: 1.4; }
+    .g-by   { font-size: .68rem; color: #888; margin-top: .2rem; }
+    .g-actions {
+      position: absolute; top: 7px; right: 7px;
+      display: none; flex-direction: column; gap: 4px;
     }
-
-    .gallery-item .overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: flex-end;
-      padding: 1rem;
-      background: linear-gradient(transparent 50%, rgba(0,0,0,0.7));
-      opacity: 0;
-      transition: opacity 0.3s;
+    .gallery-item:hover .g-actions { display: flex; }
+    .g-btn {
+      width: 27px; height: 27px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,.65); color: #fff; font-size: .82rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
+    .g-btn:hover { background: rgba(255,255,255,.22); }
 
-    .gallery-item:hover .overlay {
-      opacity: 1;
+    .empty-state { text-align: center; padding: 5rem 1rem; color: #3a3a3a; }
+    .empty-state svg { width: 52px; height: 52px; stroke: #2a2a2a; margin-bottom: .9rem; }
+    .empty-state p { font-size: .95rem; }
+
+    /* ── MODALS ── */
+    .backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88);
+      z-index: 400; align-items: center; justify-content: center; padding: 1rem;
     }
-
-    .gallery-item .overlay span {
-      font-size: 0.8rem;
-      color: #ddd;
-      letter-spacing: 0.05em;
+    .backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 2rem 1.8rem; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto;
     }
+    .modal-wide { max-width: 540px; }
+    .modal h2 { font-size: 1.15rem; font-weight: 400; letter-spacing: .06em; color: #fff; margin-bottom: 1.4rem; }
+    .modal-footer { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1.4rem; flex-wrap: wrap; }
+    .modal-switch { text-align: center; margin-top: 1.1rem; font-size: .82rem; color: var(--muted); }
+    .modal-switch a { color: var(--gold); cursor: pointer; text-decoration: none; }
+    .modal-switch a:hover { text-decoration: underline; }
+    .form-error { font-size: .8rem; color: #e05050; margin-top: -.4rem; margin-bottom: .9rem; display: none; }
 
-    .gallery-item .remove-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
+    /* Upload staging */
+    .pending-list { display: flex; flex-direction: column; gap: 1rem; }
+    .pending-item { display: flex; gap: 1rem; align-items: flex-start; }
+    .p-thumb { width: 68px; height: 68px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+    .p-meta .p-fname { font-size: .72rem; color: var(--muted); margin-bottom: .35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px; }
+
+    /* ── LIGHTBOX ── */
+    #lightbox {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.97);
+      z-index: 500; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;
     }
-
-    .gallery-item:hover .remove-btn {
-      display: flex;
+    #lightbox.open { display: flex; }
+    #lb-img { max-width: 90vw; max-height: 76vh; object-fit: contain; border-radius: 2px; display: block; }
+    .lb-meta { margin-top: .9rem; text-align: center; max-width: 560px; }
+    .lb-desc { font-size: .88rem; color: #ccc; line-height: 1.5; }
+    .lb-sub  { font-size: .72rem; color: #555; margin-top: .3rem; }
+    .lb-close { position: absolute; top: 1rem; right: 1.4rem; background: none; border: none; color: #555; font-size: 2rem; cursor: pointer; line-height: 1; }
+    .lb-close:hover { color: #fff; }
+    .lb-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,.06); border: none; color: #fff;
+      font-size: 2rem; padding: 1rem .7rem; cursor: pointer; transition: background .18s;
     }
+    .lb-nav:hover { background: rgba(255,255,255,.15); }
+    .lb-nav.prev { left: .4rem; }
+    .lb-nav.next { right: .4rem; }
 
-    /* Lightbox */
-    .lightbox {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.95);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
+    footer { text-align: center; padding: 2rem; color: #222; font-size: .75rem; border-top: 1px solid #161616; }
 
-    .lightbox.active { display: flex; }
-
-    .lightbox img {
-      max-width: 90vw;
-      max-height: 90vh;
-      object-fit: contain;
-      display: block;
-    }
-
-    .lightbox-close {
-      position: absolute;
-      top: 1rem;
-      right: 1.5rem;
-      font-size: 2rem;
-      color: #aaa;
-      cursor: pointer;
-      background: none;
-      border: none;
-      line-height: 1;
-    }
-
-    .lightbox-close:hover { color: #fff; }
-
-    .lightbox-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,255,255,0.08);
-      border: none;
-      color: #fff;
-      font-size: 2rem;
-      padding: 1rem 0.75rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .lightbox-nav:hover { background: rgba(255,255,255,0.18); }
-    .lightbox-nav.prev { left: 0.5rem; }
-    .lightbox-nav.next { right: 0.5rem; }
-
-    footer {
-      text-align: center;
-      padding: 2rem;
-      color: #333;
-      font-size: 0.8rem;
-      border-top: 1px solid #1e1e1e;
+    @media (max-width: 600px) {
+      .header-inner { padding: .8rem 1rem; }
+      #hero { padding: 3rem 1rem 2.5rem; }
+      .gallery { padding: 0 1rem 2rem; }
+      .controls, #profile-banner { padding-left: 1rem; padding-right: 1rem; }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>My Gallery</h1>
-    <p>A collection of my work</p>
-  </header>
+<!-- ═══════════ HEADER ═══════════ -->
+<header>
+  <div class="header-inner">
+    <div class="site-brand" onclick="goHome()" style="cursor:pointer" title="Home">Art<span>Gallery</span></div>
 
-  <div class="controls">
-    <label for="file-input" class="btn btn-primary">+ Add Images</label>
-    <input type="file" id="file-input" accept="image/*" multiple />
-    <button class="btn" id="clear-btn" onclick="clearAll()" style="display:none">Clear All</button>
-  </div>
+    <div class="nav-guest" id="nav-guest">
+      <button class="btn btn-sm" onclick="goHome()">Home</button>
+      <button class="btn btn-sm btn-gold" onclick="openModal('login-modal')">Log In</button>
+    </div>
 
-  <div class="empty-state" id="empty-state">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-      <polyline points="21 15 16 10 5 21"/>
-    </svg>
-    <p>Click "Add Images" to start your gallery</p>
-  </div>
-
-  <div class="gallery" id="gallery"></div>
-
-  <!-- Lightbox -->
-  <div class="lightbox" id="lightbox">
-    <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
-    <button class="lightbox-nav prev" onclick="lightboxNav(-1)">&#8249;</button>
-    <img id="lightbox-img" src="" alt="" />
-    <button class="lightbox-nav next" onclick="lightboxNav(1)">&#8250;</button>
-  </div>
-
-  <footer>
-    <p>Open this file in any browser &mdash; your images stay private on your device</p>
-  </footer>
-
-  <script>
-    let images = []; // { src, name }
-    let lightboxIndex = 0;
-
-    document.getElementById('file-input').addEventListener('change', function () {
-      const files = Array.from(this.files);
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => addImage(e.target.result, file.name);
-        reader.readAsDataURL(file);
-      });
-      this.value = '';
-    });
-
-    function addImage(src, name) {
-      images.push({ src, name });
-      render();
-    }
-
-    function removeImage(index, e) {
-      e.stopPropagation();
-      images.splice(index, 1);
-      render();
-    }
-
-    function render() {
-      const gallery = document.getElementById('gallery');
-      const empty = document.getElementById('empty-state');
-      const clearBtn = document.getElementById('clear-btn');
-
-      if (images.length === 0) {
-        gallery.innerHTML = '';
-        empty.style.display = 'block';
-        clearBtn.style.display = 'none';
-        return;
-      }
-
-      empty.style.display = 'none';
-      clearBtn.style.display = 'inline-block';
-
-      gallery.innerHTML = images.map((img, i) => `
-        <div class="gallery-item" onclick="openLightbox(${i})">
-          <img src="${img.src}" alt="${img.name}" loading="lazy" />
-          <div class="overlay"><span>${img.name}</span></div>
-          <button class="remove-btn" onclick="removeImage(${i}, event)" title="Remove">&#x2715;</button>
+    <div class="nav-user hidden" id="nav-user">
+      <button class="btn btn-sm" onclick="goHome()">Home</button>
+      <label for="file-input" class="btn btn-sm btn-gold">+ Add Images</label>
+      <input type="file" id="file-input" accept="image/*" multiple/>
+      <div class="user-chip" id="user-chip" onclick="toggleMenu()">
+        <div class="chip-avatar" id="chip-avatar"></div>
+        <span class="chip-name" id="chip-name"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:.2rem">&#9662;</span>
+        <div class="user-menu" id="user-menu">
+          <button onclick="openModal('profile-modal');closeMenu()">Edit Profile</button>
+          <button onclick="signOut()">Sign Out</button>
         </div>
-      `).join('');
-    }
+      </div>
+    </div>
+  </div>
+</header>
 
-    function clearAll() {
-      if (confirm('Remove all images from the gallery?')) {
-        images = [];
-        render();
+<!-- ═══════════ HERO ═══════════ -->
+<div id="hero">
+  <div id="hero-guest">
+    <h1>Art Gallery</h1>
+    <p>Browse and discover artwork</p>
+    <div class="hero-btns" style="flex-direction:column;align-items:center;gap:.5rem">
+      <button class="btn btn-gold" onclick="openModal('login-modal')">Log In</button>
+      <span style="font-size:.75rem;color:#555;font-style:italic">Only owner can log in</span>
+    </div>
+  </div>
+  <div id="hero-user" class="hidden">
+    <h1 id="hero-welcome"></h1>
+    <p id="hero-style-line"></p>
+    <div class="hero-btns">
+      <button class="btn btn-gold" onclick="document.getElementById('file-input').click()">+ Add Images</button>
+      <button class="btn" onclick="window.scrollTo({top:document.getElementById('gallery').offsetTop-60,behavior:'smooth'})">View Gallery</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROFILE BANNER (logged-in only) ═══════════ -->
+<div id="profile-banner" class="hidden">
+  <div class="banner-avatar" id="banner-avatar"></div>
+  <div class="banner-info">
+    <h2 id="banner-name"></h2>
+    <div class="b-style" id="banner-style"></div>
+    <div class="b-about" id="banner-about"></div>
+  </div>
+</div>
+
+<!-- ═══════════ CONTROLS ═══════════ -->
+<div class="controls">
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <span class="gallery-heading">Gallery</span>
+  </div>
+  <span class="img-count" id="img-count"></span>
+</div>
+
+<!-- ═══════════ SEARCH + TAGS ═══════════ -->
+<div class="search-bar">
+  <div class="search-wrap">
+    <span class="search-icon">&#128269;</span>
+    <input type="text" id="search-input" placeholder="Search by title or description&hellip;" oninput="onSearch(this.value)"/>
+  </div>
+  <div class="tag-chips" id="tag-chips"></div>
+  <button class="clear-search hidden" id="clear-search" onclick="clearSearch()">&#x2715; Clear</button>
+</div>
+
+<!-- ═══════════ GALLERY ═══════════ -->
+<div class="empty-state hidden" id="empty-state">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+    <polyline points="21 15 16 10 5 21"/>
+  </svg>
+  <p>No images yet &mdash; be the first to share your work</p>
+</div>
+<div class="gallery" id="gallery"></div>
+
+<footer><p>Images are stored locally in your browser</p></footer>
+
+<!-- ═══════════ LIGHTBOX ═══════════ -->
+<div id="lightbox">
+  <button class="lb-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lb-nav prev" onclick="lbNav(-1)">&#8249;</button>
+  <img id="lb-img" src="" alt=""/>
+  <div class="lb-meta">
+    <div class="lb-desc" id="lb-desc"></div>
+    <div class="lb-sub"  id="lb-sub"></div>
+  </div>
+  <button class="lb-nav next" onclick="lbNav(1)">&#8250;</button>
+</div>
+
+<!-- ═══════════ SIGN UP MODAL ═══════════ -->
+<div class="backdrop" id="signup-modal">
+  <div class="modal">
+    <h2>Create Account</h2>
+    <p class="form-error" id="su-err"></p>
+    <div class="field"><label>Full Name</label><input type="text" id="su-name" placeholder="Your name"/></div>
+    <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"/></div>
+    <div class="field"><label>Password</label><input type="password" id="su-pass" placeholder="At least 6 characters"/></div>
+    <div class="field"><label>Confirm Password</label><input type="password" id="su-pass2" placeholder="Repeat password"/></div>
+    <div class="field"><label>Art Style</label><input type="text" id="su-style" placeholder="e.g. Watercolor, Digital, Abstract&hellip;"/></div>
+    <div class="field"><label>About Me</label><textarea id="su-about" placeholder="Tell visitors about yourself and your work&hellip;"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('signup-modal')">Cancel</button>
+      <button class="btn btn-sm btn-gold" onclick="doSignup()">Create Account</button>
+    </div>
+    <div class="modal-switch">Already have an account? <a onclick="switchModal('signup-modal','login-modal')">Log in</a></div>
+  </div>
+</div>
+
+<!-- ═══════════ LOGIN MODAL ═══════════ -->
+<div class="backdrop" id="login-modal">
+  <div class="modal">
+    <h2>Log In</h2>
+    <p class="form-error" id="li-err"></p>
+    <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"/></div>
+    <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="Your password"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('login-modal')">Cancel</button>
+      <button class="btn btn-sm btn-gold" onclick="doLogin()">Log In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ UPLOAD MODAL ═══════════ -->
+<div class="backdrop" id="upload-modal">
+  <div class="modal modal-wide">
+    <h2>Add to Gallery</h2>
+    <div class="pending-list" id="pending-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('upload-modal')">Cancel</button>
+      <button class="btn btn-sm btn-gold" onclick="commitUploads()">Add to Gallery</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ EDIT DESCRIPTION MODAL ═══════════ -->
+<div class="backdrop" id="edit-modal">
+  <div class="modal">
+    <h2>Edit Description</h2>
+    <input type="hidden" id="edit-idx"/>
+    <div class="field"><label>Description</label><textarea id="edit-desc" placeholder="Describe this piece&hellip;"></textarea></div>
+    <div class="field"><label>Tags <span style="font-size:.72rem;color:var(--muted);text-transform:none;letter-spacing:0">(comma separated)</span></label><input type="text" id="edit-tags" placeholder="nature, portrait, abstract&hellip;"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-sm btn-gold" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ EDIT PROFILE MODAL ═══════════ -->
+<div class="backdrop" id="profile-modal">
+  <div class="modal">
+    <h2>Edit Profile</h2>
+    <div class="field"><label>Full Name</label><input type="text" id="ep-name"/></div>
+    <div class="field"><label>Art Style</label><input type="text" id="ep-style"/></div>
+    <div class="field"><label>About Me</label><textarea id="ep-about"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeModal('profile-modal')">Cancel</button>
+      <button class="btn btn-sm btn-gold" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage helpers ────────────────────────────────────────────────────
+function getAccounts(){ try{return JSON.parse(localStorage.getItem('ag_accounts'))||[];}catch(e){return[];} }
+function saveAccounts(a){ localStorage.setItem('ag_accounts', JSON.stringify(a)); }
+function getImages(){    try{return JSON.parse(localStorage.getItem('ag_images'))||[];}catch(e){return[];} }
+function saveImages(a){  localStorage.setItem('ag_images', JSON.stringify(a)); }
+function getCurrentId(){ return localStorage.getItem('ag_current')||null; }
+function setCurrentId(id){ if(id) localStorage.setItem('ag_current',id); else localStorage.removeItem('ag_current'); }
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function esc(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+function initials(name){ return name.trim().split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase(); }
+
+// ── State ──────────────────────────────────────────────────────────────
+var currentUser   = null;
+var pending       = [];
+var galleryFilter = 'all';   // 'all' | 'others'
+var searchQuery   = '';
+var activeTag     = null;
+
+// ── Boot ───────────────────────────────────────────────────────────────
+(function(){
+  var id = getCurrentId();
+  if(id){
+    var accs = getAccounts();
+    currentUser = accs.find(function(a){ return a.id===id; }) || null;
+  }
+  // First-time setup: no account exists yet → show signup once
+  if(getAccounts().length === 0) openModal('signup-modal');
+  applyAuthState();
+  renderGallery();
+})();
+
+function applyAuthState(){
+  var loggedIn = !!currentUser;
+  document.getElementById('nav-guest').classList.toggle('hidden', loggedIn);
+  document.getElementById('nav-user').classList.toggle('hidden', !loggedIn);
+  document.getElementById('profile-banner').classList.toggle('hidden', !loggedIn);
+  if(!loggedIn){ galleryFilter = 'all'; searchQuery = ''; activeTag = null; }
+  if(loggedIn) renderProfileUI();
+  updateHero();
+}
+
+function setFilter(f){
+  galleryFilter = f;
+  document.getElementById('tab-all').classList.toggle('active', f==='all');
+  document.getElementById('tab-others').classList.toggle('active', f==='others');
+  renderGallery();
+}
+
+function updateHero(){
+  var loggedIn = !!currentUser;
+  document.getElementById('hero-guest').classList.toggle('hidden',  loggedIn);
+  document.getElementById('hero-user').classList.toggle('hidden',  !loggedIn);
+  if(loggedIn){
+    document.getElementById('hero-welcome').textContent    = 'Welcome back, ' + currentUser.name + '!';
+    document.getElementById('hero-style-line').textContent = currentUser.style || '';
+  }
+}
+
+function goHome(){
+  ['signup-modal','login-modal','upload-modal','edit-modal','profile-modal'].forEach(closeModal);
+  closeLightbox();
+  setFilter('all');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function renderProfileUI(){
+  if(!currentUser) return;
+  var ini = initials(currentUser.name);
+  document.getElementById('chip-avatar').textContent = ini;
+  document.getElementById('chip-name').textContent   = currentUser.name.split(' ')[0];
+  document.getElementById('banner-avatar').textContent = ini;
+  document.getElementById('banner-name').textContent  = currentUser.name;
+  document.getElementById('banner-style').textContent = currentUser.style||'';
+  document.getElementById('banner-about').textContent = currentUser.about||'';
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────
+function doSignup(){
+  var name  = v('su-name'), email = v('su-email').toLowerCase();
+  var pass  = v('su-pass'), pass2 = v('su-pass2');
+  var style = v('su-style'), about = v('su-about');
+  var errEl = document.getElementById('su-err');
+  if(!name)                      return showErr(errEl,'Please enter your full name.');
+  if(!email||!email.includes('@')) return showErr(errEl,'Please enter a valid email.');
+  if(pass.length < 6)            return showErr(errEl,'Password must be at least 6 characters.');
+  if(pass !== pass2)             return showErr(errEl,'Passwords do not match.');
+  var accs = getAccounts();
+  if(accs.find(function(a){return a.email===email;})) return showErr(errEl,'An account with that email already exists.');
+  var account = { id:uid(), name:name, email:email, password:pass, style:style, about:about };
+  accs.push(account);
+  saveAccounts(accs);
+  currentUser = account;
+  setCurrentId(account.id);
+  closeModal('signup-modal');
+  clearSignupForm();
+  applyAuthState();
+  renderGallery();
+}
+
+function doLogin(){
+  var email = v('li-email').toLowerCase();
+  var pass  = v('li-pass');
+  var errEl = document.getElementById('li-err');
+  if(!email) return showErr(errEl,'Please enter your email.');
+  if(!pass)  return showErr(errEl,'Please enter your password.');
+  var accs = getAccounts();
+  var account = accs.find(function(a){return a.email===email && a.password===pass;});
+  if(!account) return showErr(errEl,'Incorrect email or password.');
+  currentUser = account;
+  setCurrentId(account.id);
+  closeModal('login-modal');
+  document.getElementById('li-email').value='';
+  document.getElementById('li-pass').value='';
+  applyAuthState();
+  renderGallery();
+}
+
+function signOut(){
+  currentUser = null;
+  setCurrentId(null);
+  closeMenu();
+  applyAuthState();
+  renderGallery();
+}
+
+function saveProfile(){
+  var name = document.getElementById('ep-name').value.trim();
+  if(!name) return;
+  var accs = getAccounts();
+  var idx = accs.findIndex(function(a){return a.id===currentUser.id;});
+  if(idx===-1) return;
+  accs[idx].name  = name;
+  accs[idx].style = document.getElementById('ep-style').value.trim();
+  accs[idx].about = document.getElementById('ep-about').value.trim();
+  saveAccounts(accs);
+  currentUser = accs[idx];
+  renderProfileUI();
+  closeModal('profile-modal');
+}
+
+function clearSignupForm(){
+  ['su-name','su-email','su-pass','su-pass2','su-style','su-about'].forEach(function(id){ document.getElementById(id).value=''; });
+}
+
+// ── Upload ─────────────────────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change', function(){
+  var files = Array.from(this.files);
+  if(!files.length) return;
+  this.value = '';
+  pending = []; var loaded = 0;
+  files.forEach(function(file, idx){
+    var r = new FileReader();
+    r.onload = function(e){
+      pending.push({src:e.target.result, name:file.name, desc:'', _o:idx});
+      if(++loaded===files.length){
+        pending.sort(function(a,b){return a._o-b._o;});
+        openUploadModal();
       }
-    }
+    };
+    r.readAsDataURL(file);
+  });
+});
 
-    function openLightbox(index) {
-      lightboxIndex = index;
-      document.getElementById('lightbox-img').src = images[index].src;
-      document.getElementById('lightbox').classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
+function openUploadModal(){
+  document.getElementById('pending-list').innerHTML = pending.map(function(p,i){
+    return '<div class="pending-item">'
+      +'<img class="p-thumb" src="'+p.src+'" alt=""/>'
+      +'<div class="p-meta" style="flex:1;min-width:0">'
+      +'<div class="p-fname">'+esc(p.name)+'</div>'
+      +'<textarea rows="2" placeholder="Add a description (optional)..." style="font-size:.8rem;margin-bottom:.4rem" oninput="pending['+i+'].desc=this.value"></textarea>'
+      +'<input type="text" placeholder="Tags: nature, portrait, abstract... (comma separated)" style="font-size:.78rem" oninput="pending['+i+'].tags=this.value"/>'
+      +'</div></div>';
+  }).join('');
+  openModal('upload-modal');
+}
 
-    function closeLightbox() {
-      document.getElementById('lightbox').classList.remove('active');
-      document.body.style.overflow = '';
-    }
+function commitUploads(){
+  var imgs = getImages();
+  pending.forEach(function(p){
+    var tags = parseTags(p.tags||'');
+    imgs.push({id:uid(), src:p.src, name:p.name, desc:p.desc, tags:tags, ownerId:currentUser.id, ownerName:currentUser.name});
+  });
+  saveImages(imgs);
+  pending = [];
+  closeModal('upload-modal');
+  renderGallery();
+}
 
-    function lightboxNav(dir) {
-      lightboxIndex = (lightboxIndex + dir + images.length) % images.length;
-      document.getElementById('lightbox-img').src = images[lightboxIndex].src;
-    }
+function parseTags(str){
+  return str.split(',').map(function(t){ return t.trim().toLowerCase(); }).filter(function(t){ return t.length>0; });
+}
 
-    document.getElementById('lightbox').addEventListener('click', function (e) {
-      if (e.target === this) closeLightbox();
-    });
+// ── Gallery render ─────────────────────────────────────────────────────
+function renderGallery(){
+  var all  = getImages();
 
-    document.addEventListener('keydown', e => {
-      const lb = document.getElementById('lightbox');
-      if (!lb.classList.contains('active')) return;
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowRight') lightboxNav(1);
-      if (e.key === 'ArrowLeft') lightboxNav(-1);
-    });
-  </script>
+  // auth filter
+  var imgs = (galleryFilter==='others' && currentUser)
+    ? all.filter(function(im){ return im.ownerId !== currentUser.id; })
+    : all;
+
+  // search filter
+  var q = searchQuery.toLowerCase();
+  if(q) imgs = imgs.filter(function(im){
+    return im.name.toLowerCase().includes(q)
+        || (im.desc||'').toLowerCase().includes(q)
+        || (im.tags||[]).some(function(t){ return t.includes(q); });
+  });
+
+  // tag filter
+  if(activeTag) imgs = imgs.filter(function(im){
+    return (im.tags||[]).indexOf(activeTag) !== -1;
+  });
+
+  // render tag chips from full (auth-filtered) set
+  var authImgs = (galleryFilter==='others' && currentUser)
+    ? all.filter(function(im){ return im.ownerId !== currentUser.id; })
+    : all;
+  renderTagChips(authImgs);
+
+  var gallery = document.getElementById('gallery');
+  var empty   = document.getElementById('empty-state');
+  var countEl = document.getElementById('img-count');
+  countEl.textContent = imgs.length ? imgs.length+' image'+(imgs.length!==1?'s':'') : '';
+
+  var hasAny = authImgs.length > 0;
+  empty.classList.toggle('hidden', hasAny);
+  if(!imgs.length && hasAny){
+    gallery.innerHTML = '<div style="text-align:center;padding:3rem 1rem;color:#444;grid-column:1/-1">No images match your search.</div>';
+    return;
+  }
+  if(!imgs.length){ gallery.innerHTML=''; return; }
+
+  gallery.innerHTML = imgs.map(function(img){
+    var mine = currentUser && img.ownerId===currentUser.id;
+    var desc = img.desc ? '<div class="g-desc">'+esc(img.desc)+'</div>' : '';
+    var by   = '<div class="g-by">by '+esc(img.ownerName)+'</div>';
+    var tags = (img.tags||[]).length
+      ? '<div class="g-tags">'+(img.tags.map(function(t){
+          return '<span class="g-tag" onclick="pickTag(\''+esc(t)+'\',event)">'+esc(t)+'</span>';
+        }).join(''))+'</div>'
+      : '';
+    var id = img.id;
+    var actions = mine
+      ? '<div class="g-actions">'
+        +'<button class="g-btn" title="Edit" onclick="openEditModal(\''+id+'\',event)">&#9998;</button>'
+        +'<button class="g-btn" title="Remove" onclick="removeImage(\''+id+'\',event)">&#x2715;</button>'
+        +'</div>'
+      : '';
+    return '<div class="gallery-item" onclick="openLightbox(\''+id+'\')">'
+      +'<img src="'+img.src+'" alt="'+esc(img.name)+'" loading="lazy"/>'
+      +'<div class="g-overlay"><div class="g-overlay-text">'+desc+by+tags+'</div></div>'
+      +actions
+      +'</div>';
+  }).join('');
+}
+
+function renderTagChips(imgs){
+  var counts = {};
+  imgs.forEach(function(im){ (im.tags||[]).forEach(function(t){ counts[t]=(counts[t]||0)+1; }); });
+  var tags = Object.keys(counts).sort();
+  var el = document.getElementById('tag-chips');
+  el.innerHTML = tags.map(function(t){
+    var cls = 'tag-chip'+(activeTag===t?' active':'');
+    return '<button class="'+cls+'" onclick="pickTag(\''+esc(t)+'\',event)">'+esc(t)+'<span style="opacity:.55;margin-left:.3rem">'+counts[t]+'</span></button>';
+  }).join('');
+  updateClearBtn();
+}
+
+function pickTag(tag, e){
+  if(e) e.stopPropagation();
+  activeTag = activeTag===tag ? null : tag;
+  renderGallery();
+}
+
+function onSearch(val){
+  searchQuery = val.trim();
+  updateClearBtn();
+  renderGallery();
+}
+
+function clearSearch(){
+  searchQuery = '';
+  activeTag   = null;
+  document.getElementById('search-input').value = '';
+  updateClearBtn();
+  renderGallery();
+}
+
+function updateClearBtn(){
+  var show = searchQuery.length>0 || activeTag!==null;
+  document.getElementById('clear-search').classList.toggle('hidden', !show);
+}
+
+// ── Edit / Remove ──────────────────────────────────────────────────────
+function openEditModal(id, e){
+  e.stopPropagation();
+  var imgs = getImages();
+  var img  = imgs.find(function(im){return im.id===id;});
+  if(!img) return;
+  document.getElementById('edit-idx').value  = id;
+  document.getElementById('edit-desc').value = img.desc||'';
+  document.getElementById('edit-tags').value = (img.tags||[]).join(', ');
+  openModal('edit-modal');
+}
+
+function saveEdit(){
+  var id   = document.getElementById('edit-idx').value;
+  var imgs = getImages();
+  var idx  = imgs.findIndex(function(im){return im.id===id;});
+  if(idx!==-1){
+    imgs[idx].desc = document.getElementById('edit-desc').value.trim();
+    imgs[idx].tags = parseTags(document.getElementById('edit-tags').value);
+    saveImages(imgs);
+  }
+  closeModal('edit-modal'); renderGallery();
+}
+
+function removeImage(id, e){
+  e.stopPropagation();
+  var imgs = getImages().filter(function(im){return im.id!==id;});
+  saveImages(imgs); renderGallery();
+}
+
+// ── Profile modal pre-fill ─────────────────────────────────────────────
+function openProfileModal_(){
+  document.getElementById('ep-name').value  = currentUser.name||'';
+  document.getElementById('ep-style').value = currentUser.style||'';
+  document.getElementById('ep-about').value = currentUser.about||'';
+  openModal('profile-modal');
+}
+// intercept profile-modal open to pre-fill
+var _origOpen = window.openModal;
+
+// ── Lightbox ───────────────────────────────────────────────────────────
+var lbImageId = null;
+
+function filteredImgs(){
+  var all = getImages();
+  return (galleryFilter==='others' && currentUser)
+    ? all.filter(function(im){ return im.ownerId !== currentUser.id; })
+    : all;
+}
+
+function openLightbox(id){
+  lbImageId = id;
+  setLb(id);
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function setLb(id){
+  var img = getImages().find(function(im){ return im.id===id; });
+  if(!img) return;
+  document.getElementById('lb-img').src          = img.src;
+  document.getElementById('lb-desc').textContent = img.desc||'';
+  document.getElementById('lb-sub').textContent  = img.name+' · by '+img.ownerName;
+}
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow=''; }
+function lbNav(d){
+  var imgs = filteredImgs();
+  var idx  = imgs.findIndex(function(im){ return im.id===lbImageId; });
+  if(idx===-1) return;
+  lbImageId = imgs[(idx+d+imgs.length)%imgs.length].id;
+  setLb(lbImageId);
+}
+document.getElementById('lightbox').addEventListener('click',function(e){if(e.target===this)closeLightbox();});
+
+// ── Modal helpers ──────────────────────────────────────────────────────
+function openModal(id){
+  if(id==='profile-modal' && currentUser){
+    document.getElementById('ep-name').value  = currentUser.name||'';
+    document.getElementById('ep-style').value = currentUser.style||'';
+    document.getElementById('ep-about').value = currentUser.about||'';
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function switchModal(from,to){ closeModal(from); openModal(to); }
+
+document.querySelectorAll('.backdrop').forEach(function(el){
+  el.addEventListener('click',function(e){ if(e.target===el) el.classList.remove('open'); });
+});
+
+// ── User menu ──────────────────────────────────────────────────────────
+function toggleMenu(){ document.getElementById('user-menu').classList.toggle('open'); }
+function closeMenu(){  document.getElementById('user-menu').classList.remove('open'); }
+document.addEventListener('click', function(e){ if(!document.getElementById('user-chip').contains(e.target)) closeMenu(); });
+
+// ── Enter key on login/signup ──────────────────────────────────────────
+document.getElementById('li-pass').addEventListener('keydown',  function(e){if(e.key==='Enter')doLogin();});
+document.getElementById('su-pass2').addEventListener('keydown', function(e){if(e.key==='Enter')doSignup();});
+
+// ── Keyboard shortcuts ─────────────────────────────────────────────────
+document.addEventListener('keydown',function(e){
+  if(document.getElementById('lightbox').classList.contains('open')){
+    if(e.key==='Escape')     closeLightbox();
+    if(e.key==='ArrowRight') lbNav(1);
+    if(e.key==='ArrowLeft')  lbNav(-1);
+  } else if(e.key==='Escape'){
+    ['signup-modal','login-modal','upload-modal','edit-modal','profile-modal'].forEach(closeModal);
+  }
+});
+
+// ── Util ───────────────────────────────────────────────────────────────
+function v(id){ return document.getElementById(id).value.trim(); }
+function showErr(el, msg){ el.textContent=msg; el.style.display='block'; setTimeout(function(){el.style.display='none';},4000); }
+</script>
 </body>
 </html>

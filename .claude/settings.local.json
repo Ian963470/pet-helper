@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\index.html\")",
+      "Bash(start \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\gallery.html\")"
+    ]
+  }
+}

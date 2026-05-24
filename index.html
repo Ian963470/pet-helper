@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lost Pet Finder</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+    <header>
+      <a class="site-name" href="#" onclick="showPage('home'); return false;">Lost Pet Finder</a>
+      <nav>
+        <a href="#" onclick="showPage('help'); return false;">Help</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+    <main>
+
+      <!-- HOME PAGE -->
+      <section id="home" class="page active">
+        <div class="hero">
+          <div class="hero-emoji">🐾</div>
+          <h1>Lost Pet Finder</h1>
+          <p class="tagline">Connecting worried owners with helpful neighbors — one sighting at a time.</p>
+          <div class="home-buttons">
+            <button class="btn btn-primary" onclick="showPage('lost-pet-form')">🐶 I lost a pet</button>
+            <button class="btn btn-secondary" onclick="showPage('report-sighting-form')">👀 I spotted a pet</button>
+          </div>
+        </div>
+
+        <div class="facts-strip">
+          <div class="facts-header">
+            <h2 class="facts-heading">Did you know?</h2>
+            <button class="btn btn-ghost btn-sm" id="facts-toggle" onclick="toggleFacts()">Hide facts ▲</button>
+          </div>
+          <div id="facts-content" class="facts-grid">
+            <div class="fact-card">
+              <div class="fact-icon">1 in 3</div>
+              <p>pets will go missing at least once in their lifetime.</p>
+            </div>
+            <div class="fact-card">
+              <div class="fact-icon">93%</div>
+              <p>of lost dogs are found when owners act fast in the first 24 hours.</p>
+            </div>
+            <div class="fact-card">
+              <div class="fact-icon">⏱️</div>
+              <p>Most lost pets are found within a few blocks of their home.</p>
+            </div>
+            <div class="fact-card">
+              <div class="fact-icon">🏷️</div>
+              <p>A collar tag with your phone number is the fastest way to get your pet back.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="recently-missing">
+          <h2>Recently reported missing <span class="badge" id="missing-count"></span></h2>
+          <div id="missing-gallery" class="pet-gallery"></div>
+        </div>
+
+        <div class="how-it-works">
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li><span class="step-num">1</span> Report your missing pet with a description.</li>
+            <li><span class="step-num">2</span> Neighbors in your city report sightings.</li>
+            <li><span class="step-num">3</span> You see matching sightings and contact the spotter directly.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- HELP PAGE -->
+      <section id="help" class="page">
+        <h2>🆘 What to do when your pet goes missing</h2>
+
+        <div class="alert-box">
+          <strong>Act fast.</strong> The first hour is the most important. Do not wait.
+        </div>
+
+        <ol class="tips-list">
+          <li>Search your immediate street first — pets rarely go far in the first hour.</li>
+          <li>Ask neighbors to check their gardens, sheds, and garages.</li>
+          <li>Put a familiar-smelling item like a blanket outside your front door — it may help your pet find its way home.</li>
+          <li>Call local vets and animal shelters to report your pet missing.</li>
+          <li>Post on local community social media groups with a photo and your phone number.</li>
+          <li>Check back on Lost Pet Finder regularly — new sightings are added by people in your area.</li>
+          <li>Found your pet? Next time, put a tag with your phone number on their collar.</li>
+        </ol>
+
+        <h3>Fast facts about lost pets</h3>
+        <ul class="fact-list">
+          <li>🐕 About 10 million pets are lost in the United States every year.</li>
+          <li>🐈 Only about 2% of lost cats that enter shelters are reunited with their owners — most are found by neighbors.</li>
+          <li>📍 The most common reason pets go missing is an open gate or door.</li>
+          <li>🌙 Pets are more likely to hide at night — search near bushes, under cars, and in quiet spots.</li>
+          <li>🔊 Calling your pet's name loudly can sometimes attract other animals — try shaking a treat bag instead.</li>
+          <li>📋 Microchipped pets are up to 20 times more likely to be returned to their owner than non-microchipped pets.</li>
+        </ul>
+
+        <button class="btn btn-secondary" onclick="showPage('home')">Back to Home</button>
+      </section>
+
+      <!-- LOST PET FORM -->
+      <section id="lost-pet-form" class="page">
+        <h2>I Lost a Pet</h2>
+        <div id="lost-pet-confirmation" class="confirmation hidden"></div>
+        <form id="lost-pet-form-el" novalidate>
+
+          <div class="form-group">
+            <label for="lp-pet-type">Pet type <span class="required">*</span></label>
+            <select id="lp-pet-type" required>
+              <option value="">Select pet type</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="bird">Bird</option>
+              <option value="rabbit">Rabbit</option>
+              <option value="other">Other</option>
+            </select>
+            <span class="error-msg" id="err-lp-pet-type"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-color">Color <span class="required">*</span></label>
+            <input type="text" id="lp-color" maxlength="50" placeholder="e.g. brown, black and white" required />
+            <span class="error-msg" id="err-lp-color"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-size">Size <span class="required">*</span></label>
+            <select id="lp-size" required>
+              <option value="">Select size</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+            <span class="error-msg" id="err-lp-size"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-gender">Gender <span class="required">*</span></label>
+            <select id="lp-gender" required>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
+            </select>
+            <span class="error-msg" id="err-lp-gender"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-description">Description <span class="optional">(optional)</span></label>
+            <textarea id="lp-description" maxlength="300" placeholder="e.g. has a scar on left ear, very shy"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-street">Last known street <span class="required">*</span></label>
+            <input type="text" id="lp-street" maxlength="100" placeholder="e.g. Main Street" required />
+            <span class="error-msg" id="err-lp-street"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-city">Last known city <span class="required">*</span></label>
+            <input type="text" id="lp-city" maxlength="100" placeholder="e.g. Springfield" required />
+            <span class="error-msg" id="err-lp-city"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-contact">Your contact info <span class="required">*</span></label>
+            <input type="text" id="lp-contact" maxlength="100" placeholder="Phone number or email" required />
+            <span class="error-msg" id="err-lp-contact"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-photo">Photo of your pet <span class="optional">(optional)</span></label>
+            <input type="file" id="lp-photo" accept="image/jpeg,image/png,image/gif" />
+            <span class="error-msg" id="err-lp-photo"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Report</button>
+            <button type="button" class="btn btn-ghost" onclick="showPage('home')">Cancel</button>
+          </div>
+
+        </form>
+
+        <div id="lost-pet-controls" class="hidden">
+          <button class="btn btn-ghost" onclick="editLostPetReport()">Edit my report</button>
+          <button class="btn btn-ghost" onclick="deleteLostPetReport()">Delete my report</button>
+          <button class="btn btn-found" onclick="markPetAsFound()">Mark as found</button>
+        </div>
+      </section>
+
+      <!-- REPORT A SIGHTING FORM -->
+      <section id="report-sighting-form" class="page">
+        <h2>I Spotted a Pet</h2>
+        <div id="sighting-confirmation" class="confirmation hidden"></div>
+        <form id="sighting-form-el" novalidate>
+
+          <div class="form-group">
+            <label for="s-pet-type">Pet type <span class="required">*</span></label>
+            <select id="s-pet-type" required>
+              <option value="">Select pet type</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="bird">Bird</option>
+              <option value="rabbit">Rabbit</option>
+              <option value="other">Other</option>
+            </select>
+            <span class="error-msg" id="err-s-pet-type"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-color">Color <span class="required">*</span></label>
+            <input type="text" id="s-color" maxlength="50" placeholder="e.g. brown, black and white" required />
+            <span class="error-msg" id="err-s-color"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-size">Size <span class="required">*</span></label>
+            <select id="s-size" required>
+              <option value="">Select size</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+            <span class="error-msg" id="err-s-size"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-gender">Gender <span class="required">*</span></label>
+            <select id="s-gender" required>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
+            </select>
+            <span class="error-msg" id="err-s-gender"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-street">Street where spotted <span class="required">*</span></label>
+            <input type="text" id="s-street" maxlength="100" placeholder="e.g. Oak Avenue" required />
+            <span class="error-msg" id="err-s-street"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-city">City <span class="required">*</span></label>
+            <input type="text" id="s-city" maxlength="100" placeholder="e.g. Springfield" required />
+            <span class="error-msg" id="err-s-city"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-phone">Your phone number <span class="required">*</span></label>
+            <input type="tel" id="s-phone" maxlength="20" placeholder="e.g. 555-123-4567" required />
+            <span class="error-msg" id="err-s-phone"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="s-photo">Photo of the pet <span class="optional">(optional)</span></label>
+            <input type="file" id="s-photo" accept="image/jpeg,image/png,image/gif" />
+            <span class="error-msg" id="err-s-photo"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Sighting</button>
+            <button type="button" class="btn btn-ghost" onclick="showPage('home')">Cancel</button>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- SIGHTINGS RESULTS -->
+      <section id="sightings-results" class="page">
+        <h2>Sightings Results</h2>
+
+        <div class="filters">
+          <div class="filter-group">
+            <label for="f-color">Color</label>
+            <input type="text" id="f-color" placeholder="e.g. brown" oninput="applyFilters()" />
+          </div>
+          <div class="filter-group">
+            <label for="f-size">Size</label>
+            <select id="f-size" onchange="applyFilters()">
+              <option value="">Any</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="f-gender">Gender</label>
+            <select id="f-gender" onchange="applyFilters()">
+              <option value="">Any</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="f-neighborhood">Neighborhood</label>
+            <input type="text" id="f-neighborhood" placeholder="e.g. Downtown" oninput="applyFilters()" />
+          </div>
+          <button class="btn btn-ghost filter-clear" onclick="clearFilters()">Clear all filters</button>
+        </div>
+
+        <div id="results-count" class="results-count"></div>
+        <div id="results-list"></div>
+
+        <p class="tip">Found your pet? Next time, put a tag with your phone number on their collar.</p>
+      </section>
+
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">🐾 Live Stats</h3>
+        <div class="stat-row">
+          <span class="stat-label">Missing reports</span>
+          <span class="stat-value" id="sb-missing">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Sightings today</span>
+          <span class="stat-value" id="sb-today">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Active sightings</span>
+          <span class="stat-value" id="sb-active">0</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">⚡ Quick Actions</h3>
+        <button class="btn btn-primary sidebar-btn" onclick="showPage('lost-pet-form')">🐶 I lost a pet</button>
+        <button class="btn btn-secondary sidebar-btn" onclick="showPage('report-sighting-form')">👀 I spotted a pet</button>
+      </div>
+
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">📋 Recent Activity</h3>
+        <div id="sb-activity" class="activity-list"></div>
+      </div>
+
+      <div class="sidebar-section sidebar-fact">
+        <h3 class="sidebar-heading">💡 Pet Safety Tip</h3>
+        <p id="sb-tip" class="sidebar-tip-text"></p>
+        <button class="btn btn-ghost btn-sm" onclick="nextTip()">Next tip →</button>
+      </div>
+
+    </aside>
+
+    </div><!-- end .layout -->
+
+    <footer>
+      <p>Lost Pet Finder</p>
+      <a href="#" onclick="showPage('help'); return false;">Help</a>
+      <div class="accessibility-controls">
+        <button onclick="toggleLargeText()">Large text</button>
+        <button onclick="toggleHighContrast()">High contrast</button>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
