@@ -27,6 +27,7 @@
           <div class="home-buttons">
             <button class="btn btn-primary" onclick="showPage('lost-pet-form')">🐶 I lost a pet</button>
             <button class="btn btn-secondary" onclick="showPage('report-sighting-form')">👀 I spotted a pet</button>
+            <button class="btn btn-found" onclick="showPage('found-pet-form')">🎉 I found a pet</button>
           </div>
         </div>
 
@@ -57,15 +58,20 @@
 
         <div class="recently-missing">
           <h2>Recently reported missing <span class="badge" id="missing-count"></span></h2>
+          <div class="gallery-search">
+            <input type="text" id="gs-color" placeholder="Search by color..." oninput="filterGallery()" />
+            <input type="text" id="gs-city"  placeholder="Search by city..."  oninput="filterGallery()" />
+          </div>
           <div id="missing-gallery" class="pet-gallery"></div>
         </div>
 
         <div class="how-it-works">
           <h2>How it works</h2>
           <ol class="steps">
-            <li><span class="step-num">1</span> Report your missing pet with a description.</li>
-            <li><span class="step-num">2</span> Neighbors in your city report sightings.</li>
-            <li><span class="step-num">3</span> You see matching sightings and contact the spotter directly.</li>
+            <li><span class="step-num">1</span> Report your missing pet with a description and receive a private owner code.</li>
+            <li><span class="step-num">2</span> Neighbors in your city report sightings or submit a found report.</li>
+            <li><span class="step-num">3</span> You see matching sightings and contact spotters directly.</li>
+            <li><span class="step-num">4</span> If someone found your pet, verify with them and confirm with your owner code.</li>
           </ol>
         </div>
       </section>
@@ -187,7 +193,7 @@
         <div id="lost-pet-controls" class="hidden">
           <button class="btn btn-ghost" onclick="editLostPetReport()">Edit my report</button>
           <button class="btn btn-ghost" onclick="deleteLostPetReport()">Delete my report</button>
-          <button class="btn btn-found" onclick="markPetAsFound()">Mark as found</button>
+          <button class="btn btn-found" onclick="promptMarkAsFound(null)">Mark as found</button>
         </div>
       </section>
 
@@ -270,6 +276,110 @@
         </form>
       </section>
 
+      <!-- FOUND PET FORM -->
+      <section id="found-pet-form" class="page">
+        <h2>I Found a Pet</h2>
+        <p class="form-intro">Tell us about the pet you found so we can connect you with their owner. Your contact info will only be visible to the matching pet owner.</p>
+        <div id="found-pet-confirmation" class="confirmation hidden"></div>
+        <form id="found-pet-form-el" novalidate>
+
+          <div class="form-section-heading">About the pet</div>
+
+          <div class="form-group">
+            <label for="fp-pet-type">Pet type <span class="required">*</span></label>
+            <select id="fp-pet-type" required>
+              <option value="">Select pet type</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="bird">Bird</option>
+              <option value="rabbit">Rabbit</option>
+              <option value="other">Other</option>
+            </select>
+            <span class="error-msg" id="err-fp-pet-type"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-color">Color <span class="required">*</span></label>
+            <input type="text" id="fp-color" maxlength="50" placeholder="e.g. brown, black and white" required />
+            <span class="error-msg" id="err-fp-color"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-size">Size <span class="required">*</span></label>
+            <select id="fp-size" required>
+              <option value="">Select size</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+            <span class="error-msg" id="err-fp-size"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-gender">Gender <span class="required">*</span></label>
+            <select id="fp-gender" required>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
+            </select>
+            <span class="error-msg" id="err-fp-gender"></span>
+          </div>
+
+          <div class="form-section-heading">Where you found them</div>
+
+          <div class="form-group">
+            <label for="fp-street">Street <span class="required">*</span></label>
+            <input type="text" id="fp-street" maxlength="100" placeholder="e.g. Oak Avenue" required />
+            <span class="error-msg" id="err-fp-street"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-city">City <span class="required">*</span></label>
+            <input type="text" id="fp-city" maxlength="100" placeholder="e.g. Springfield" required />
+            <span class="error-msg" id="err-fp-city"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-circumstances">How you found them <span class="required">*</span></label>
+            <textarea id="fp-circumstances" maxlength="500" placeholder="Describe where and how you found the pet. Include any identifying details — collar, markings, behaviour." required></textarea>
+            <span class="error-msg" id="err-fp-circumstances"></span>
+          </div>
+
+          <div class="form-section-heading">Your contact info</div>
+
+          <div class="form-group">
+            <label for="fp-name">Your name <span class="required">*</span></label>
+            <input type="text" id="fp-name" maxlength="100" placeholder="Full name" required />
+            <span class="error-msg" id="err-fp-name"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-phone">Phone number <span class="required">*</span></label>
+            <input type="tel" id="fp-phone" maxlength="20" placeholder="e.g. 555-123-4567" required />
+            <span class="error-msg" id="err-fp-phone"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-email">Email address <span class="required">*</span></label>
+            <input type="email" id="fp-email" maxlength="100" placeholder="e.g. you@example.com" required />
+            <span class="error-msg" id="err-fp-email"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="fp-photo">Photo of the pet <span class="optional">(optional — strongly recommended)</span></label>
+            <input type="file" id="fp-photo" accept="image/jpeg,image/png,image/gif" />
+            <span class="error-msg" id="err-fp-photo"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Found Report</button>
+            <button type="button" class="btn btn-ghost" onclick="showPage('home')">Cancel</button>
+          </div>
+
+        </form>
+      </section>
+
       <!-- SIGHTINGS RESULTS -->
       <section id="sightings-results" class="page">
         <h2>Sightings Results</h2>
@@ -304,6 +414,45 @@
           <button class="btn btn-ghost filter-clear" onclick="clearFilters()">Clear all filters</button>
         </div>
 
+        <div id="owner-found-bar" class="hidden owner-found-bar">
+          <div class="owner-bar-header">
+            <p>This is your active missing pet report.</p>
+            <div class="owner-found-actions">
+              <button class="btn btn-ghost" onclick="editLostPetReport()">Edit my report</button>
+              <button class="btn btn-ghost" onclick="deleteLostPetReport()">Delete my report</button>
+              <button class="btn btn-found" onclick="promptMarkAsFound(null)">Mark as found</button>
+            </div>
+          </div>
+          <div id="found-claim-banner" class="found-claim-banner hidden">
+            <div class="found-claim-header">
+              <span class="found-claim-badge">Possible match!</span>
+              <span id="claim-time-ago" class="claim-time-ago"></span>
+            </div>
+            <p class="found-claim-intro">Someone says they have your pet. Contact them to verify, then confirm or deny below.</p>
+            <img id="claim-photo" src="" alt="Photo submitted by finder" class="claim-photo hidden" />
+            <div class="claim-detail-row">
+              <span class="claim-label">Name</span>
+              <span id="claim-finder-name" class="claim-value"></span>
+            </div>
+            <div class="claim-detail-row">
+              <span class="claim-label">Contact</span>
+              <span id="claim-finder-contact" class="claim-value"></span>
+            </div>
+            <div class="claim-detail-row">
+              <span class="claim-label">Found at</span>
+              <span id="claim-location" class="claim-value"></span>
+            </div>
+            <div class="claim-detail-row">
+              <span class="claim-label">How found</span>
+              <span id="claim-circumstances" class="claim-value"></span>
+            </div>
+            <div class="found-claim-actions">
+              <button id="btn-confirm-found" class="btn btn-found">Confirm Pet Found</button>
+              <button id="btn-deny-claim" class="btn btn-ghost">Deny This Claim</button>
+            </div>
+          </div>
+        </div>
+
         <div id="results-count" class="results-count"></div>
         <div id="results-list"></div>
 
@@ -335,6 +484,7 @@
         <h3 class="sidebar-heading">⚡ Quick Actions</h3>
         <button class="btn btn-primary sidebar-btn" onclick="showPage('lost-pet-form')">🐶 I lost a pet</button>
         <button class="btn btn-secondary sidebar-btn" onclick="showPage('report-sighting-form')">👀 I spotted a pet</button>
+        <button class="btn btn-found sidebar-btn" onclick="showPage('found-pet-form')">🎉 I found a pet</button>
       </div>
 
       <div class="sidebar-section">
@@ -361,6 +511,38 @@
       </div>
     </footer>
 
+    <!-- OWNER CODE MODAL -->
+    <div id="owner-code-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="owner-code-title">
+      <div class="modal-box">
+        <h3 id="owner-code-title" class="modal-title">Save Your Owner Code</h3>
+        <p class="modal-desc">This code is shown only once. Write it down somewhere safe — you will need it to confirm your pet has been found and close your listing.</p>
+        <div class="owner-code-box">
+          <span id="owner-code-display" class="owner-code"></span>
+        </div>
+        <p class="modal-note">Keep this code private. Nobody can close your listing without it, so it protects your report from being falsely marked as found.</p>
+        <button class="btn btn-primary modal-close-btn" onclick="closeOwnerCodeModal()">I've saved my code</button>
+      </div>
+    </div>
+
+    <!-- CONFIRM FOUND MODAL -->
+    <div id="confirm-found-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-found-title">
+      <div class="modal-box">
+        <h3 id="confirm-found-title" class="modal-title">Confirm Your Pet Was Found</h3>
+        <p class="modal-desc">Enter the owner code you received when you first reported your pet missing. This confirms you are the owner and will close the listing.</p>
+        <div class="form-group">
+          <label for="owner-code-input">Owner code</label>
+          <input type="text" id="owner-code-input" maxlength="12" placeholder="PH-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+          <span class="error-msg" id="owner-code-error"></span>
+        </div>
+        <p class="modal-note">Lost your code? Use "Delete my report" instead to remove the listing.</p>
+        <div class="modal-actions">
+          <button class="btn btn-found" onclick="confirmPetFoundWithCode()">Confirm Found</button>
+          <button class="btn btn-ghost" onclick="closeConfirmFoundModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
   </body>
 </html>

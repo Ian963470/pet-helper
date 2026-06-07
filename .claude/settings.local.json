@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(start \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\index.html\")",
-      "Bash(start \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\gallery.html\")"
+      "Bash(start \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\gallery.html\")",
+      "Bash(start \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\whac-a-mole.html\")",
+      "Bash(start drone-soccer.html)",
+      "Bash(vercel --version)",
+      "Bash(git push *)",
+      "PowerShell(Start-Process \"chrome.exe\" \"c:\\\\Users\\\\stell\\\\Documents\\\\GitHub\\\\pet-helper\\\\index.html\")"
     ]
   }
 }
