@@ -99,6 +99,7 @@ function clearError(fieldId) {
 function rowToReport(row) {
   return {
     id: row.id,
+    petName: row.pet_name || null,
     petType: row.pet_type,
     color: row.color,
     size: row.size,
@@ -108,6 +109,7 @@ function rowToReport(row) {
     city: row.city,
     contact: row.contact,
     photo: row.photo,
+    reward: row.reward || null,
     timestamp: row.timestamp,
     status: row.status,
     ownerCodeHash: row.owner_code_hash,
@@ -118,6 +120,7 @@ function rowToReport(row) {
 function reportToRow(r) {
   return {
     id: r.id,
+    pet_name: r.petName || null,
     pet_type: r.petType,
     color: r.color,
     size: r.size,
@@ -127,6 +130,7 @@ function reportToRow(r) {
     city: r.city,
     contact: r.contact,
     photo: r.photo || null,
+    reward: r.reward || null,
     timestamp: r.timestamp,
     status: r.status,
     owner_code_hash: r.ownerCodeHash || null,
@@ -335,6 +339,7 @@ document.getElementById('lost-pet-form-el').addEventListener('submit', async fun
   lpFields.forEach(f => clearError(f));
   clearError('lp-photo');
 
+  const petName = document.getElementById('lp-pet-name').value.trim();
   const petType = document.getElementById('lp-pet-type').value;
   const color   = document.getElementById('lp-color').value.trim();
   const size    = document.getElementById('lp-size').value;
@@ -343,6 +348,7 @@ document.getElementById('lost-pet-form-el').addEventListener('submit', async fun
   const street  = document.getElementById('lp-street').value.trim();
   const city    = document.getElementById('lp-city').value.trim();
   const contact = document.getElementById('lp-contact').value.trim();
+  const reward  = document.getElementById('lp-reward').value.trim();
 
   let valid = true;
   if (!petType) { showError('lp-pet-type', 'This field is required'); valid = false; }
@@ -377,7 +383,7 @@ document.getElementById('lost-pet-form-el').addEventListener('submit', async fun
     }
 
     const report = {
-      id, petType, color, size, gender, desc, street, city, contact,
+      id, petName, petType, color, size, gender, desc, street, city, contact, reward,
       photo: photoData || (existing ? existing.photo : null),
       timestamp: Date.now(),
       status: existing ? (existing.status || 'active') : 'active',
@@ -419,7 +425,8 @@ async function editLostPetReport() {
   const report = await getLostPetById(currentLostPetId);
   if (!report) { alert('This report no longer exists.'); return; }
 
-  document.getElementById('lp-pet-type').value    = report.petType;
+  document.getElementById('lp-pet-name').value     = report.petName || '';
+  document.getElementById('lp-pet-type').value     = report.petType;
   document.getElementById('lp-color').value        = report.color;
   document.getElementById('lp-size').value         = report.size;
   document.getElementById('lp-gender').value       = report.gender;
@@ -427,6 +434,7 @@ async function editLostPetReport() {
   document.getElementById('lp-street').value       = report.street;
   document.getElementById('lp-city').value         = report.city;
   document.getElementById('lp-contact').value      = report.contact;
+  document.getElementById('lp-reward').value       = report.reward || '';
 
   document.getElementById('lost-pet-confirmation').classList.add('hidden');
   showPage('lost-pet-form');
@@ -449,6 +457,12 @@ async function deleteLostPetReport() {
   await renderSidebar();
   alert('Your report has been removed.');
   showPage('home');
+}
+
+function markFoundFromTile(petId) {
+  currentLostPetId = petId;
+  sessionStorage.setItem('currentLostPetId', petId);
+  promptMarkAsFound(null);
 }
 
 function promptMarkAsFound(claimId) {
@@ -663,25 +677,41 @@ function buildCard(s) {
     : '';
 
   return `
-    <div class="card" id="card-${s.id}">
+    <div class="card" id="card-${s.id}" onclick="openSightingModal('${s.id}')" style="cursor:pointer;">
       ${photoHtml}
       <div class="card-location">${escapeHtml(s.street)}, ${escapeHtml(s.city)}</div>
       <div class="card-details">
         ${capitalize(s.petType)} &bull; ${escapeHtml(s.color)} &bull; ${capitalize(s.size)} &bull; ${capitalize(s.gender)}
       </div>
       <div class="card-time">${formatDate(s.timestamp)}</div>
-      <div class="card-actions">
-        <button class="btn btn-ghost" onclick="showContact('${s.id}')">Show contact</button>
-        <button class="btn btn-ghost" onclick="reportSpam('${s.id}')">Report spam</button>
-      </div>
-      <div id="contact-${s.id}" class="phone-revealed hidden">${escapeHtml(s.phone)}</div>
+      <div class="card-hint">Click to see full details &amp; contact</div>
     </div>
   `;
 }
 
-function showContact(id) {
-  const el = document.getElementById('contact-' + id);
-  if (el) el.classList.remove('hidden');
+function openSightingModal(id) {
+  const s = allSightings.find(x => x.id === id);
+  if (!s) return;
+
+  const photo = document.getElementById('sm-photo');
+  if (s.photo) { photo.src = s.photo; photo.classList.remove('hidden'); }
+  else { photo.classList.add('hidden'); }
+
+  document.getElementById('sm-pet').textContent      = capitalize(s.petType);
+  document.getElementById('sm-color').textContent    = escapeHtml(s.color);
+  document.getElementById('sm-size').textContent     = capitalize(s.size);
+  document.getElementById('sm-gender').textContent   = capitalize(s.gender);
+  document.getElementById('sm-location').textContent = `${s.street}, ${s.city}`;
+  document.getElementById('sm-time').textContent     = formatDate(s.timestamp);
+  document.getElementById('sm-phone').textContent    = s.phone;
+
+  document.getElementById('sm-spam-btn').onclick = () => { reportSpam(id); closeSightingModal(); };
+  document.getElementById('sighting-modal').classList.remove('hidden');
+}
+
+function closeSightingModal(e) {
+  if (e && e.target !== document.getElementById('sighting-modal')) return;
+  document.getElementById('sighting-modal').classList.add('hidden');
 }
 
 async function reportSpam(id) {
@@ -889,6 +919,34 @@ function nextTip() {
   if (tipEl) tipEl.textContent = TIPS[currentTip];
 }
 
+function urgencyText(timestamp) {
+  const hours = Math.floor((Date.now() - timestamp) / 3600000);
+  const days  = Math.floor(hours / 24);
+  if (hours < 1)  return 'Missing < 1 hour';
+  if (hours < 24) return `Missing ${hours}h`;
+  return `Missing ${days} day${days === 1 ? '' : 's'}`;
+}
+
+function urgencyClass(timestamp) {
+  const hours = (Date.now() - timestamp) / 3600000;
+  if (hours < 24) return 'urgency-fresh';
+  if (hours < 72) return 'urgency-moderate';
+  return 'urgency-critical';
+}
+
+async function sharePetById(id) {
+  const reports = await getLostPetReports();
+  const r = reports.find(x => x.id === id);
+  if (!r) return;
+  const name = r.petName ? `${r.petName} the ` : '';
+  const text = `🐾 LOST PET: ${name}${r.color} ${r.petType}, last seen on ${r.street}, ${r.city}.${r.reward ? ` Reward: ${r.reward}.` : ''} Contact: ${r.contact}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: `Lost ${capitalize(r.petType)}`, text }); } catch {}
+  } else {
+    try { await navigator.clipboard.writeText(text); alert('Copied to clipboard!'); } catch { alert(text); }
+  }
+}
+
 function timeAgo(timestamp) {
   const diff  = Date.now() - timestamp;
   const mins  = Math.floor(diff / 60000);
@@ -961,15 +1019,25 @@ function filterGallery(preloaded) {
         ? `<div class="status-badge badge-possibly-found">Possibly Found</div>`
         : `<div class="status-badge badge-active">Missing</div>`;
 
+      const displayName = r.petName ? escapeHtml(r.petName) : `${escapeHtml(r.color)} ${capitalize(r.petType)}`;
+      const subtitle    = r.petName ? `${escapeHtml(r.color)} ${capitalize(r.petType)} &bull; ${escapeHtml(r.city)}` : escapeHtml(r.city);
+      const rewardBadge = r.reward  ? `<div class="reward-badge">💰 ${escapeHtml(r.reward)}</div>` : '';
+
       return `
         <div class="pet-tile" onclick="showPage('sightings-results')" title="Click to view sightings">
           <div class="pet-tile-img-wrap">
             ${imageHtml}
             ${statusBadge}
+            <button class="btn btn-found btn-sm tile-found-btn" onclick="event.stopPropagation(); markFoundFromTile('${r.id}')">I found my pet</button>
           </div>
           <div class="pet-tile-info">
-            <div class="pet-tile-name">${capitalize(r.color)} ${capitalize(r.petType)}</div>
-            <div class="pet-tile-detail">${escapeHtml(r.city)}</div>
+            <div class="pet-tile-name">${displayName}</div>
+            <div class="pet-tile-detail">${subtitle}</div>
+            ${rewardBadge}
+            <div class="urgency-timer ${urgencyClass(r.timestamp)}">${urgencyText(r.timestamp)}</div>
+          </div>
+          <div class="tile-actions">
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); sharePetById('${r.id}')">📤 Share</button>
           </div>
         </div>
       `;

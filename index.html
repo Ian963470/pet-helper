@@ -23,7 +23,7 @@
         <div class="hero">
           <div class="hero-emoji">🐾</div>
           <h1>Lost Pet Finder</h1>
-          <p class="tagline">Connecting worried owners with helpful neighbors — one sighting at a time.</p>
+          <p class="tagline">Bring your pet back home.</p>
           <div class="home-buttons">
             <button class="btn btn-primary" onclick="showPage('lost-pet-form')">🐶 I lost a pet</button>
             <button class="btn btn-secondary" onclick="showPage('report-sighting-form')">👀 I spotted a pet</button>
@@ -114,6 +114,11 @@
         <form id="lost-pet-form-el" novalidate>
 
           <div class="form-group">
+            <label for="lp-pet-name">Pet's name <span class="optional">(optional)</span></label>
+            <input type="text" id="lp-pet-name" maxlength="50" placeholder="e.g. Buddy" />
+          </div>
+
+          <div class="form-group">
             <label for="lp-pet-type">Pet type <span class="required">*</span></label>
             <select id="lp-pet-type" required>
               <option value="">Select pet type</option>
@@ -175,6 +180,11 @@
             <label for="lp-contact">Your contact info <span class="required">*</span></label>
             <input type="text" id="lp-contact" maxlength="100" placeholder="Phone number or email" required />
             <span class="error-msg" id="err-lp-contact"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lp-reward">Reward offered <span class="optional">(optional)</span></label>
+            <input type="text" id="lp-reward" maxlength="60" placeholder="e.g. $50 cash reward" />
           </div>
 
           <div class="form-group">
@@ -460,6 +470,27 @@
       </section>
 
     </main>
+
+    <!-- SIGHTING DETAIL MODAL -->
+    <div id="sighting-modal" class="modal-backdrop hidden" onclick="closeSightingModal(event)">
+      <div class="modal-box">
+        <button class="modal-close" onclick="closeSightingModal()">✕</button>
+        <h3 class="modal-title">Sighting Details</h3>
+        <img id="sm-photo" src="" alt="Photo of spotted pet" class="modal-photo hidden" />
+        <div class="modal-rows">
+          <div class="modal-row"><span class="modal-label">Pet</span><span id="sm-pet"></span></div>
+          <div class="modal-row"><span class="modal-label">Color</span><span id="sm-color"></span></div>
+          <div class="modal-row"><span class="modal-label">Size</span><span id="sm-size"></span></div>
+          <div class="modal-row"><span class="modal-label">Gender</span><span id="sm-gender"></span></div>
+          <div class="modal-row"><span class="modal-label">Location</span><span id="sm-location"></span></div>
+          <div class="modal-row"><span class="modal-label">Spotted</span><span id="sm-time"></span></div>
+          <div class="modal-row"><span class="modal-label">Contact</span><span id="sm-phone" class="modal-contact"></span></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="sm-spam-btn">Report spam</button>
+        </div>
+      </div>
+    </div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
