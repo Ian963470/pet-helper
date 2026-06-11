@@ -1,8 +1,8 @@
 // ── Supabase ──────────────────────────────────────────────────────────────────
 const { createClient } = supabase;
 const db = createClient(
-  'https://jfixnhhdiwtteugxpkwi.supabase.co',
-  'sb_publishable_D8svdOvMpGN5amAUsfOHqA_K16erMAm'
+  'https://pbqsqzszuwwhlmnlqfou.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBicXNxenN6dXd3aGxtbmxxZm91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjI1NjEsImV4cCI6MjA5NjU5ODU2MX0.ArpUYZCwdpifgfM-Ca46AOSnQtB5Jl7dRYLIICr8llY'
 );
 
 // ── State ─────────────────────────────────────────────────────────────────────
